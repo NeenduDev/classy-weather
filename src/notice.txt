@@ -1,0 +1,2 @@
+Counter.js
+just making familiarity with class components
