@@ -1,2 +1,8 @@
 Counter.js
 just making familiarity with class components
+
+App-v1
+has boilerplate code.
+
+App 
+Removing Boilerplate Code With Class Fields

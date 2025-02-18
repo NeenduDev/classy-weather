@@ -38,6 +38,7 @@ class App extends React.Component {
     isLoading: false,
     displayLocation: "",
     weather: {},
+    controller: new AbortController(), // Controller for aborting requests
   };
 
   fetchWeather = async () => {
@@ -46,9 +47,15 @@ class App extends React.Component {
     try {
       this.setState({ isLoading: true });
 
+      // Abort previous request if it's still in progress
+      this.state.controller.abort();
+      const newController = new AbortController();
+      this.setState({ controller: newController });
+
       // 1) Getting location (geocoding)
       const geoRes = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${this.state.location}`
+        `https://geocoding-api.open-meteo.com/v1/search?name=${this.state.location}`,
+        { signal: newController.signal }
       );
       const geoData = await geoRes.json();
       console.log(geoData);
@@ -64,12 +71,15 @@ class App extends React.Component {
 
       // 2) Getting actual weather
       const weatherRes = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&timezone=${timezone}&daily=weathercode,temperature_2m_max,temperature_2m_min`
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&timezone=${timezone}&daily=weathercode,temperature_2m_max,temperature_2m_min`,
+        { signal: newController.signal }
       );
       const weatherData = await weatherRes.json();
       this.setState({ weather: weatherData.daily });
     } catch (err) {
-      console.error(err);
+      if (err.name !== "AbortError") {
+        console.error(err);
+      }
     } finally {
       this.setState({ isLoading: false });
     }
@@ -79,8 +89,6 @@ class App extends React.Component {
 
   // useEffect []
   componentDidMount() {
-    // this.fetchWeather();
-
     this.setState({ location: localStorage.getItem("location") || "" });
   }
 
